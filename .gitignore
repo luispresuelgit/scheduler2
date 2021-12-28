@@ -1,0 +1,6 @@
+*.sql
+*.txt
+!requirements.txt
+.idea/
+.django/
+venv/
