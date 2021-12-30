@@ -13,5 +13,9 @@ class PropertyStatus(Enum):
 
 class ActivityStatus(Enum):
 
-    ACTIVE = 'ACTIVE'
-    INACTIVE = 'INACTIVE'
+    active = 'active'
+    inactive = 'inactive'
+
+    @classmethod
+    def choices(cls):
+        return tuple((i.name, i.value) for i in cls)

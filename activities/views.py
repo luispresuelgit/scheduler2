@@ -3,10 +3,13 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from activities.models import Property, Activity, Survey
 from activities.serializers import PropertySerializer, ActivitySerializer, SurveySerializer
-from activities.enums import PropertyStatus
+from activities.enums import PropertyStatus, ActivityStatus
 from django.utils import timezone
 from activities.exceptions import DisabledPropertyError, SameDateHourError
 from django.http import JsonResponse
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import make_aware
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the activities2 index.")
@@ -62,31 +65,61 @@ def property_detail(request, pk):
         property.delete()
         return HttpResponse(status=204)
 
+
 @csrf_exempt
 def activity_list(request):
     """
-    List all Activities, or create a new activity.
+    List all Activities.
     """
-    if request.method == 'GET':
-        activities = Activity.objects.all()
-        serializer = ActivitySerializer(activities, many=True)
-        return JsonResponse(serializer.data, safe=False)
+    if request.method == 'POST':
 
-    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        if len(data.keys()) == 0:
+            three_days_ago = timezone.now() - timezone.timedelta(days=3)
+            two_weeks_ahead = timezone.now() + timezone.timedelta(days=14)
+            activities = Activity.objects.filter(schedule__range=[three_days_ago, two_weeks_ahead]).all()
+            serializer = ActivitySerializer(activities, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        else:
+            query = Activity.objects
+            if 'status' in data.keys():
+                query = query.filter(status=data['status'])
+            if 'date_init' in data.keys() and 'date_end' in data.keys():
+                date_init = data['date_init']
+                date_end = data['date_end']
+                query = query.filter(schedule__range=[date_init, date_end])
+            activities = query.all()
+            serializer = ActivitySerializer(activities, many=True)
+            return JsonResponse(serializer.data, safe=False)
+
+
+@csrf_exempt
+def activity_create(request):
+    """
+    Create Activities.
+    """
+    if request.method == 'POST':
         # will automatically return the first object that meets this condition
         # if not found will return None
         property_disabled = Property.objects.filter(status=PropertyStatus.disabled.name).first()
         if property_disabled is not None:
             raise DisabledPropertyError()
 
-        # import pdb
-        # pdb.set_trace()
-
         data = JSONParser().parse(request)
+
+        date_hour_init = make_aware(parse_datetime(data['schedule']))
+        hour_head = date_hour_init + timezone.timedelta(hours=1)
+        query = Activity.objects.filter(schedule__range=[date_hour_init, hour_head])
+        query = query.filter(property_id=data['property_id'])
+        activities = query.all()
+        if len(activities) > 0:
+            raise SameDateHourError()
+
         property = Property.objects.get(id=data['property_id'])
         new_activity = Activity(
             title=data['title'],
             schedule=data['schedule'],
+            status=data['status'] if 'status' in data.keys() else ActivityStatus.active.name,
             property=property
         )
         new_activity.save()

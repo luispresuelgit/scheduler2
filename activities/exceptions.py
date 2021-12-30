@@ -9,5 +9,5 @@ class DisabledPropertyError(APIException):
 
 class SameDateHourError(APIException):
     status_code = 400
-    default_detail = "Cannot create activities within same property"
+    default_detail = "Cannot schedule activities at the same time with the same property"
     default_code = "same_date_hour_error"
