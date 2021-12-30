@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(auto_now=True, verbose_name='date modified')),
                 ('title', models.CharField(max_length=255)),
                 ('status', models.CharField(max_length=35)),
-                ('schedule', models.DateTimeField(auto_now=True, verbose_name='disabled at')),
+                ('schedule', models.DateTimeField(verbose_name='disabled at')),
             ],
             options={
                 'abstract': False,
