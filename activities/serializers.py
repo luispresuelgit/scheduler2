@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from activities.models import Property, Activity, Survey
-from activities.enums import PropertyStatus
+from activities.enums import PropertyStatus, ActivityStatus
+from django.utils import timezone
+from django.http import HttpRequest
 
 
 class PropertySerializer(serializers.Serializer):
@@ -32,10 +34,38 @@ class PropertySerializer(serializers.Serializer):
 
 class ActivitySerializer(serializers.ModelSerializer):
     property = PropertySerializer()
+    condition = serializers.SerializerMethodField('get_condition')
+    survey = serializers.SerializerMethodField('get_survey')
 
     class Meta:
         model = Activity
         fields = "__all__"
+
+    def get_condition(self, activity):
+        condition = "N/A"
+        if activity.status == ActivityStatus.active.name and activity.schedule >= timezone.now():
+            condition = "Pending"
+
+        if activity.status == ActivityStatus.active.name and activity.schedule < timezone.now():
+            condition = "Delayed"
+
+        if activity.status == ActivityStatus.done.name:
+            condition = "Finalized"
+        return condition
+
+    def get_survey(self, activity):
+        survey_url = "Not created yet"
+        survey = Survey.objects.filter(activity_id=activity.id).first()
+        if survey is not None:
+            request = HttpRequest()
+            # base_url = request.get_host()
+            ip = '127.0.0.1'
+            base_url = ip
+            port = '8000'
+            if port:
+                base_url += ':%s' % port
+            survey_url = 'http://%s/activities/%s/survey/%s' % (base_url, activity.id, survey.id)
+        return survey_url
 
 
 class SurveySerializer(serializers.ModelSerializer):

@@ -38,10 +38,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RemoveField(
             model_name='survey',
-            name='id',
-        ),
-        migrations.RemoveField(
-            model_name='survey',
             name='modified',
         ),
         migrations.AlterField(
@@ -62,6 +58,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='survey',
             name='activity',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='activities.activity'),
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, serialize=False, to='activities.activity'),
         ),
     ]

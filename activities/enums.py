@@ -14,7 +14,8 @@ class PropertyStatus(Enum):
 class ActivityStatus(Enum):
 
     active = 'active'
-    inactive = 'inactive'
+    cancelled = 'cancelled'
+    done = 'done'
 
     @classmethod
     def choices(cls):

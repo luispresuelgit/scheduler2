@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import JSONField
-from activities.enums import PropertyStatus
-# from .enums import PropertyStatus, ActivityStatus
+from activities.enums import PropertyStatus, ActivityStatus
+
 # If not specified, all fields are not null
 # e.g.: text = models.TextField("text", null=True, blank=True)
 
@@ -39,19 +39,14 @@ class Property(HasCreatedTimeStamp, HasUpdatedTimeStamp, hasTitleStatus):
 
 
 class Activity(HasCreatedTimeStamp, HasUpdatedTimeStamp, hasTitleStatus):
-    ActivityStatus = (
-        ('active', 'active'),
-        ('inactive', 'inactive'),
-    )
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
     schedule = models.DateTimeField('schedule')
-    status = models.CharField(max_length=35, choices=ActivityStatus, default='active')
+    status = models.CharField(max_length=35, choices=ActivityStatus.choices(), default='active')
 
 
 class Survey(HasCreatedTimeStamp):
     activity = models.OneToOneField(
         Activity,
-        on_delete=models.CASCADE,
-        primary_key=True,
+        on_delete=models.CASCADE
     )
     answers = JSONField()
